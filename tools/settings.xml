@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<settings>
+  <!-- Налаштування для групи і вчителя -->
+  <audience>323</audience>
+  <semestrStart>9/1/2017</semestrStart>
+  <teachers>
+    <teacher>Ковалюк Тетяна Володиміривна</teacher>
+    <teacher>Клименко Олена Миколаївна</teacher>
+    <teacher>Жук Віктор Андрійович</teacher>
+  </teachers>
+  <!-- Налаштування запуску -->
+  <!-- Якщо не вказано або 0, то почне розпізнавання негайно -->
+  <timeBeforeStart>20</timeBeforeStart>
+  <!-- Якщо не вказано або 0, то програма буде працювати постійно -->
+  <timeAfterStart>30</timeAfterStart>
+  <!-- Якщо не вказано буде працювать поки не перевірить всі фотографії -->
+  <timeToTardiness>15</timeToTardiness>
+  <!--час тривалості пари-->
+  <pairTime>1:35</pairTime>
+  <!--час тривалості перерви-->
+  <breakTime>0:20</breakTime>
+  <!--час початку пари-->
+  <timetable>
+    <pair number="1">8:30</pair>
+    <pair number="2">10:25</pair>
+    <pair number="3">12:20</pair>
+    <pair number="4">14:15</pair>
+    <pair number="5">16:10</pair>
+  </timetable>
+  <!-- Налаштування для роботи з фотографіями -->
+  <photo>
+    <minHeight>64</minHeight>
+    <maxHeight>512</maxHeight>
+    <minWidth>64</minWidth>
+    <maxWidth>512</maxWidth>
+    <!-- Якщо не буде мультиформатності фото то просто тег-->
+    <!--<format>none</format>-->
+    <formats>
+      <format>jpg</format>
+      <format>jpeg</format>
+      <format>png</format>
+    </formats>
+  </photo>
+  <!-- Налаштування збереження данних та фотографій -->
+  <saves>
+    <!-- Якщо вказано, то сюди будуть зберігатися не розпізнані лиця -->
+    <notRecognizedDir>/unknown</notRecognizedDir>
+    <!-- Якщо вказано, то сюди будуть зберігатися лиця з коефіціентом більше conf -->
+    <!-- Якщо conf не вказано, то буде братися стандартне значення -->
+    <notSureRecognizedDir conf="60">/not_sure</notSureRecognizedDir>
+  </saves>
+</settings>
