@@ -83,4 +83,4 @@ def parse_settings(filepath='settings.xml'):
             if d.firstChild:
                 properties['notSureRecognizedDir'] = d.firstChild.data
     finally:
-        return properties
+        return properties      
