@@ -25,19 +25,19 @@ class FaceRecognizer(object):
                  formats=[]):
         self.notRecognizedDir = notRecognizedDir
         self.notSureRecognizedDir = notSureRecognizedDir
-        self.photoDir = trainPhotoDir#CHECK
+        self.photoDir = trainPhotoDir
         self.unknownPhotoDir = forRecognitionPhotoDir
-        self.coef = maxCoefficient#CHECK
-        self.formats = formats#CHECK
+        self.coef = maxCoefficient
+        self.formats = formats
         self.minSize = minSize
         if isinstance(faceCascade, str):
             self.faceCascade = cv2.CascadeClassifier(os.path.abspath(faceCascade))
         else:
-            self.faceCascade = faceCascade#CHECK
+            self.faceCascade = faceCascade
 
-        # Check main variables    
+        # Check main variables
         def __check():
-            assert self.faceCascade.empty()
+            assert not self.faceCascade.empty()
             assert os.path.isdir(self.photoDir)
             assert os.path.isdir(self.unknownPhotoDir)
             if self.notRecognizedDir:
@@ -50,8 +50,10 @@ class FaceRecognizer(object):
         __check()
 
 
-    def _training(self):
-        pass
+    def train(self):
+        images_and_labels = self.getTrainImages()
+        self.recognizer = cv2.createLBPHFaceRecognizer(1,8,8,8,123)
+        self.recognizer.train(images_and_labels[0], np.array(images_and_labels[1]))
 
 
     def getFaces(self, photoPath):
@@ -61,7 +63,7 @@ class FaceRecognizer(object):
         """
         images, labels = [], []
         try:
-            gray = Image.open(photoPath)
+            gray = Image.open(photoPath).convert('L')
         except IOError:
             return None # [], [] ?
         subject_number = self.getSubjectNumber(photoPath)
@@ -106,5 +108,63 @@ class FaceRecognizer(object):
         return images, labels
 
 
-    def start_recognition(self, data=None, dataHandler=None):
-        pass
+    def recognitionDataHandler(self, *args, **kwargs):
+        print(args, kwargs)
+
+
+    def stopCondition(self, iteration=None, *args, **kwargs):
+        if iteration == 10:
+            return True
+
+    def checkFormat(self, imagePath):
+        """
+        Return True if imagePath image format in self.formats
+        else False
+        """
+        format = re.search(r"\.(\w+)[/\\]*$", imagePath)
+        if format and format.groups(0)[0] in self.formats:
+            return True
+        return False
+
+
+    def recognizeImage(self, imagePath):
+        """
+        Recognize all faces in image imagePath, ALL recognition data
+        sends in method recognitionDataHandler
+        """
+        try:
+            gray = Image.open(imagePath).convert('L')
+        except IOError:
+            return None
+        image = np.array(gray, 'uint8')
+        faces = self.faceCascade.detectMultiScale(
+                    image,
+                    scaleFactor=1.1,
+                    minNeighbors=3,
+                    minSize=self.minSize)
+
+        facesCount = len(faces)
+        for n, (x, y, w, h) in enumerate(faces, 1):
+            number_predicted, coef = self.recognizer.predict(image[y: y + h, x: x + w])
+            self.recognitionDataHandler(numPredicted=number_predicted,
+                                        coef=coef,
+                                        imagePath=imagePath,
+                                        faceNum=n,
+                                        faceCount=facesCount)
+
+
+    def start_recognition(self):
+        i = 0
+        while True:
+            images = [
+                os.path.join(self.unknownPhotoDir, image)
+                for image in os.listdir(self.unknownPhotoDir)
+                ]
+            images = filter(self.checkFormat, images)
+
+            for path in images:
+                i += 1
+                self.recognizeImage(path)
+
+                if self.stopCondition(i):
+                    return None
