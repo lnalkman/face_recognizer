@@ -53,6 +53,26 @@ class StudentInfo(QtGui.QGridLayout):
         self.addWidget(self.group, 4, 2)
 
 
+class StudentsTable(QtGui.QTableWidget):
+
+    def __init__(self, *args, **kwargs):
+        QtGui.QTableWidget.__init__(self, 10, 3)
+
+        self.setHorizontalHeaderLabels((u'Особа', u'Дата та час', u'K'))
+
+        # Size properties
+        self.hHeader = self.horizontalHeader()
+        self.hHeader.setResizeMode(0, QtGui.QHeaderView.Stretch)
+        self.hHeader.setResizeMode(1, QtGui.QHeaderView.Fixed)
+        self.hHeader.setResizeMode(2, QtGui.QHeaderView.ResizeToContents)
+
+        self.setShowGrid(False)
+        self.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+
+        self.setAlternatingRowColors(True)
+
+
 
 
 class Window(QtGui.QWidget):
@@ -96,25 +116,17 @@ class Window(QtGui.QWidget):
         mainLayout.addWidget(self.tabMenu, 1, 2)
 
         # List of recognized students
-        self.findedStudents = QtGui.QListWidget()
-        self.findedStudents.addItem('Some item');self.findedStudents.addItem('Some item');self.findedStudents.addItem('Some item');self.findedStudents.addItem('Some item');self.findedStudents.addItem('Some item')
-        self.findedStudents.item(0).setBackgroundColor(QtGui.QColor(200, 200, 255))
+        self.findedStudents = StudentsTable()
         self.tabMenu.insertTab(1, self.findedStudents, u'Розпізнані особи')
 
-        # List of recognized students who were late
-        self.lateStudents = QtGui.QListWidget()
-        self.lateStudents.addItem('Some late item1');self.lateStudents.addItem('Some late item2');self.lateStudents.addItem('Some late item3');self.lateStudents.addItem('Some late item4');
-        self.tabMenu.insertTab(2, self.lateStudents, u'Запізнення')
 
         # List of recognized students who absent
-        self.lateStudents = QtGui.QListWidget()
-        self.lateStudents.addItem('Some absent item1');self.lateStudents.addItem('Some absent item2');self.lateStudents.addItem('Some absent item3');self.lateStudents.addItem('Some absent item4');self.lateStudents.addItem('Some absent item5');self.lateStudents.addItem('Some absent item6');self.lateStudents.addItem('Some absent item7');
-        self.tabMenu.insertTab(3, self.lateStudents, u'Відсутні')
+        self.absentStudents = QtGui.QListWidget()
+        self.tabMenu.insertTab(3, self.absentStudents, u'Відсутні')
 
         # Recognition statistics
-        self.lateStudents = QtGui.QListWidget()
-        self.lateStudents.addItem('Some late item1');self.lateStudents.addItem('Some late item2');self.lateStudents.addItem('Some late item3');self.lateStudents.addItem('Some late item4');
-        self.tabMenu.insertTab(4, self.lateStudents, u'Статистика')
+        self.stat = QtGui.QListWidget()
+        self.tabMenu.insertTab(3, self.stat, u'Статистика')
 
 
 
