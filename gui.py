@@ -54,9 +54,12 @@ class StudentInfo(QtGui.QGridLayout):
 
 
 class StudentsTable(QtGui.QTableWidget):
-
+    """
+    Table with list of students.
+    Implements a friendly api to add students.
+    """
     def __init__(self, *args, **kwargs):
-        QtGui.QTableWidget.__init__(self, 10, 3)
+        QtGui.QTableWidget.__init__(self, 0, 3)
 
         self.setHorizontalHeaderLabels((u'Особа', u'Дата та час', u'K'))
 
@@ -73,6 +76,29 @@ class StudentsTable(QtGui.QTableWidget):
         self.setAlternatingRowColors(True)
 
 
+    def addStudent(self, fullName=None, date=None, k=None, late=False):
+        """
+        Add student's name, date and k(recognition coefficient) to table.
+        Accept fullName->String, date->String, k->[int, String], late->bool
+        If late: added row will be painted in lateColor variable
+        """
+        lateColor = QtGui.QColor(255, 75, 75)
+
+        name = QtGui.QTableWidgetItem(fullName or ' ')
+        date = QtGui.QTableWidgetItem(date or ' ')
+        k = QtGui.QTableWidgetItem(str(k or -1))
+
+        if late:
+            name.setBackgroundColor(lateColor)
+            date.setBackgroundColor(lateColor)
+            k.setBackgroundColor(lateColor)
+
+        # Add new row
+        currRow = self.rowCount()
+        self.insertRow(currRow)
+        self.setItem(currRow, 0, name)
+        self.setItem(currRow, 1, date)
+        self.setItem(currRow, 2, k)
 
 
 class Window(QtGui.QWidget):
@@ -100,11 +126,8 @@ class Window(QtGui.QWidget):
             )
         leftLayout.addWidget(self.studPhoto, 1, 1)
 
-        # Widget with information about choosen student
-        # self.studInfo = QtGui.QTableWidget(2,2)
+        # Layout with information about choosen student
         self.studInfo = StudentInfo()
-        # print(self.studInfo.item(1,-1))
-        # self.studInfo.setItem(0,1, QtGui.QTableWidgetItem('hey i\'m 1,1'))
         leftLayout.addLayout(self.studInfo, 2, 1)
 
         # Tabs with information about recognition
@@ -119,7 +142,6 @@ class Window(QtGui.QWidget):
         self.findedStudents = StudentsTable()
         self.tabMenu.insertTab(1, self.findedStudents, u'Розпізнані особи')
 
-
         # List of recognized students who absent
         self.absentStudents = QtGui.QListWidget()
         self.tabMenu.insertTab(3, self.absentStudents, u'Відсутні')
@@ -128,6 +150,12 @@ class Window(QtGui.QWidget):
         self.stat = QtGui.QListWidget()
         self.tabMenu.insertTab(3, self.stat, u'Статистика')
 
+
+    def setImage(self, imagePath=None):
+        image = QtGui.QPixmap()
+        image.load(imagePath)
+        self.studPhoto.orgPixmap = image
+        self.studPhoto.setPixmap(image)
 
 
 window = Window()
