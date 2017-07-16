@@ -44,9 +44,9 @@
   <!-- Налаштування збереження данних та фотографій -->
   <saves>
     <!-- Якщо вказано, то сюди будуть зберігатися не розпізнані лиця -->
-    <notRecognizedDir>/unknown</notRecognizedDir>
+    <notRecognizedDir></notRecognizedDir>
     <!-- Якщо вказано, то сюди будуть зберігатися лиця з коефіціентом більше conf -->
     <!-- Якщо conf не вказано, то буде братися стандартне значення -->
-    <notSureRecognizedDir conf="60">/not_sure</notSureRecognizedDir>
+    <notSureRecognizedDir conf="60"></notSureRecognizedDir>
   </saves>
 </settings>

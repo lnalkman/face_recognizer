@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from PyQt4 import QtCore, QtGui
 import sys
+from Controller import RecognitionController
 
 app = QtGui.QApplication(sys.argv)
 
@@ -86,7 +87,7 @@ class StudentsTable(QtGui.QTableWidget):
 
         name = QtGui.QTableWidgetItem(fullName or ' ')
         date = QtGui.QTableWidgetItem(date or ' ')
-        k = QtGui.QTableWidgetItem(str(k or -1))
+        k = QtGui.QTableWidgetItem(str(k))
 
         if late:
             name.setBackgroundColor(lateColor)
@@ -158,7 +159,18 @@ class Window(QtGui.QWidget):
         self.studPhoto.setPixmap(image)
 
 
+class Recognizer(QtCore.QThread):
+
+    def __init__(self, window, parent=None):
+        self.window = window
+        QtCore.QThread.__init__(self, parent)
+
+    def run(self):
+        recognizer = RecognitionController(window=self.window)
+
 window = Window()
+recognizer = Recognizer(window)
+recognizer.start()
 window.show()
 
 sys.exit(app.exec_())

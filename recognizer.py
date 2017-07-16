@@ -22,14 +22,15 @@ class FaceRecognizer(object):
     def __init__(self, notRecognizedDir=None, notSureRecognizedDir=None,
                  forRecognitionPhotoDir=None, trainPhotoDir=None,
                  faceCascade=None, maxCoefficient=60, minSize=(60, 60),
-                 formats=[]):
+                 maxSize=(720, 480), formats=[]):
         self.notRecognizedDir = notRecognizedDir
         self.notSureRecognizedDir = notSureRecognizedDir
         self.photoDir = trainPhotoDir
         self.unknownPhotoDir = forRecognitionPhotoDir
         self.coef = maxCoefficient
         self.formats = formats
-        self.minSize = minSize
+        self.minSize = tuple(minSize)
+        self.maxSize = tuple(maxSize)
         if isinstance(faceCascade, str):
             self.faceCascade = cv2.CascadeClassifier(os.path.abspath(faceCascade))
         else:
@@ -44,7 +45,7 @@ class FaceRecognizer(object):
                 assert os.path.isdir(self.notRecognizedDir)
             if self.notSureRecognizedDir:
                 assert os.path.isdir(self.notSureRecognizedDir)
-            assert [x for x in formats if isinstance(x, str)]
+            assert [x for x in formats if isinstance(x, str) or isinstance(x, unicode)]
             assert maxCoefficient
             assert len(minSize) == 2
         __check()
@@ -144,6 +145,12 @@ class FaceRecognizer(object):
                     minSize=self.minSize)
 
         facesCount = len(faces)
+        if not facesCount: self.recognitionDataHandler(numPredicted=None,
+                                    coef=None,
+                                    imagePath=imagePath,
+                                    faceNum=None,
+                                    faceCount=None)
+
         for n, (x, y, w, h) in enumerate(faces, 1):
             number_predicted, coef = self.recognizer.predict(image[y: y + h, x: x + w])
             self.recognitionDataHandler(numPredicted=number_predicted,
