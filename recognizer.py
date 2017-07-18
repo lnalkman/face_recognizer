@@ -110,7 +110,7 @@ class FaceRecognizer(object):
 
 
     def recognitionDataHandler(self, *args, **kwargs):
-        print(args, kwargs)
+        pass
 
 
     def stopCondition(self, iteration=None, *args, **kwargs):
