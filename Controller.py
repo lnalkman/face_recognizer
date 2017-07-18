@@ -3,16 +3,18 @@
 import os
 import shelve
 import datetime
+from PyQt4 import QtCore
 from tools.parser import parse_settings
 from recognizer import FaceRecognizer
 
 
-class RecognitionController(FaceRecognizer):
+class RecognitionController(QtCore.QThread, FaceRecognizer):
     """
     Class bind the recognizer to the graphical interface.
     Show some recognition data in GUI.
     """
     def __init__(self, window=None):
+        QtCore.QThread.__init__(self)
         FaceRecognizer.__init__(
             self,
             faceCascade=os.path.abspath('tools/haarcascade_frontalface_default.xml'),
@@ -25,8 +27,8 @@ class RecognitionController(FaceRecognizer):
         self.finded = list()
         self.Window = window
 
-        self.train()
-        self.start_recognition()
+        # self.train()
+        # self.start_recognition()
 
 
     def recognitionDataHandler(self, numPredicted, coef, faceNum, faceCount, imagePath):
@@ -42,7 +44,31 @@ class RecognitionController(FaceRecognizer):
                                                     ),
                                                   k=int(coef))
 
+            self.emit(QtCore.SIGNAL('setNewImage'),
+                      self.getImagePathByNumber(numPredicted)
+                      )
+
+
     def stopCondition(self, *args):
         return False
-#
-# a = RecognitionController()
+
+
+    def getImagePathByNumber(self, number):
+        """
+        Returns the absolute path to the first photo in the folder
+        of the specified person's number.
+        """
+        path = os.path.join(self.photoDir,
+                            'id{:0>3}'.format(number)
+                            )
+        path = os.path.abspath(path)
+        return os.path.join(path, os.listdir(path)[0])
+
+
+    def run(self):
+        self.Window.connect(self,
+                            QtCore.SIGNAL('setNewImage'),
+                            self.Window.setImage
+                            )
+        self.train()
+        self.start_recognition()
