@@ -13,7 +13,7 @@ class ScaledPhotoLabel(QtGui.QLabel):
         QtGui.QLabel.__init__(self, parent)
         self.orgPixmap = None
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event=None):
         if self.orgPixmap:
             pixmap = self.orgPixmap
             size = event.size()
@@ -118,7 +118,7 @@ class Window(QtGui.QWidget):
         self.studPhoto = ScaledPhotoLabel()
         self.studPhoto.setAlignment(QtCore.Qt.AlignCenter)
         img = QtGui.QPixmap();
-        img.load('image.png')
+        img.load('image.jpg')
         self.studPhoto.orgPixmap = img
         self.studPhoto.setPixmap(img)
         self.studPhoto.setSizePolicy(
@@ -153,23 +153,23 @@ class Window(QtGui.QWidget):
 
 
     def setImage(self, imagePath=None):
+        """
+        Set new image in self.studPhoto label.
+        New image resize to prew image size.
+        """
+        event = QtGui.QResizeEvent(
+            self.studPhoto.sizeHint(),
+            QtCore.QSize()
+            )
         image = QtGui.QPixmap()
         image.load(imagePath)
         self.studPhoto.orgPixmap = image
         self.studPhoto.setPixmap(image)
+        self.studPhoto.resizeEvent(event)
 
-
-class Recognizer(QtCore.QThread):
-
-    def __init__(self, window, parent=None):
-        self.window = window
-        QtCore.QThread.__init__(self, parent)
-
-    def run(self):
-        recognizer = RecognitionController(window=self.window)
 
 window = Window()
-recognizer = Recognizer(window)
+recognizer = RecognitionController(window)
 recognizer.start()
 window.show()
 
