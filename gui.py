@@ -111,7 +111,10 @@ class Window(QtGui.QWidget):
         #self.resize(750, 600)
 
         mainLayout = QtGui.QGridLayout(self)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
+
         leftLayout = QtGui.QGridLayout()
+        leftLayout.setContentsMargins(11, 11, 0, 15)
         mainLayout.addLayout(leftLayout, 1, 1)
 
         # Photo label where will recognized or choosen student photo
@@ -137,7 +140,10 @@ class Window(QtGui.QWidget):
             QtGui.QSizePolicy.MinimumExpanding,
             QtGui.QSizePolicy.MinimumExpanding
             )
-        mainLayout.addWidget(self.tabMenu, 1, 2)
+        tabLayout = QtGui.QGridLayout()
+        tabLayout.addWidget(self.tabMenu)
+        tabLayout.setContentsMargins(0, 11, 11, 15)
+        mainLayout.addLayout(tabLayout, 1, 2)
 
         # List of recognized students
         self.findedStudents = StudentsTable()
@@ -150,6 +156,16 @@ class Window(QtGui.QWidget):
         # Recognition statistics
         self.stat = QtGui.QListWidget()
         self.tabMenu.insertTab(3, self.stat, u'Статистика')
+
+        self.statusBar = QtGui.QStatusBar()
+        self.statusBar.setStyleSheet(
+            '''background-color: #bfffb5;
+            font-family: Arial;
+            font-size: 18px;
+            color: #333;'''
+        )
+        self.statusBar.hide()
+        mainLayout.addWidget(self.statusBar, 2, 1, 1, 2)
 
 
     def setImage(self, imagePath=None):
