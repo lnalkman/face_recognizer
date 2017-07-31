@@ -1,6 +1,9 @@
 # -*- coding: UTF-8 -*-
-from PyQt4 import QtCore, QtGui
+
+import os
 import sys
+import re
+from PyQt4 import QtCore, QtGui
 from Controller import RecognitionController
 
 app = QtGui.QApplication(sys.argv)
@@ -31,6 +34,11 @@ class StudentInfo(QtGui.QGridLayout):
         u"<span style='font-size: 26px; color: #0e2838;font-family: Arial,sans-serif;'>По батькові</span>",
         u"<span style='font-size: 26px; color: #0e2838;font-family: Arial,sans-serif;'>Група</span>",
     ]
+
+    tag = [
+        "<b style='font-size: 26px; color: #333333;font-family: Arial,sans-serif;'>",
+        "</b>"
+        ]
 
     def __init__(self, parent=None):
         QtGui.QGridLayout.__init__(self, parent)
@@ -63,6 +71,7 @@ class StudentsTable(QtGui.QTableWidget):
         QtGui.QTableWidget.__init__(self, 0, 3)
 
         self.setHorizontalHeaderLabels((u'Особа', u'Дата та час', u'K'))
+        self.setStyleSheet('background-color: #d6f7ff;')
 
         # Size properties
         self.hHeader = self.horizontalHeader()
@@ -77,7 +86,7 @@ class StudentsTable(QtGui.QTableWidget):
         self.setAlternatingRowColors(True)
 
 
-    def addStudent(self, fullName=None, date=None, k=None, late=False):
+    def addStudent(self, fullName=None, date=None, k=None, late=False, metadata=None):
         """
         Add student's name, date and k(recognition coefficient) to table.
         Accept fullName->String, date->String, k->[int, String], late->bool
@@ -101,6 +110,8 @@ class StudentsTable(QtGui.QTableWidget):
         self.setItem(currRow, 1, date)
         self.setItem(currRow, 2, k)
 
+        self.takeHorizontalHeaderItem(currRow).metadata = metadata
+
 
 class Window(QtGui.QWidget):
 
@@ -109,6 +120,7 @@ class Window(QtGui.QWidget):
         self.setMinimumSize(700, 550)
         self.setWindowTitle(u'Розпізнавання облич')
         #self.resize(750, 600)
+        self.setStyleSheet('background-color: #aaf0ff;')
 
         mainLayout = QtGui.QGridLayout(self)
         mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -159,12 +171,13 @@ class Window(QtGui.QWidget):
 
         self.statusBar = QtGui.QStatusBar()
         self.statusBar.setStyleSheet(
-            '''background-color: #bfffb5;
+            '''background-color: #1488a0;
             font-family: Arial;
             font-size: 18px;
-            color: #333;'''
+            color: #fff;'''
         )
-        self.statusBar.hide()
+        self.statusBar.showMessage(u'Готово')
+        # self.statusBar.hide()
         mainLayout.addWidget(self.statusBar, 2, 1, 1, 2)
 
 
@@ -182,6 +195,45 @@ class Window(QtGui.QWidget):
         self.studPhoto.orgPixmap = image
         self.studPhoto.setPixmap(image)
         self.studPhoto.resizeEvent(event)
+
+
+    def setLabelsData(self, name=None, sname=None, mname=None, group=None):
+        tag = self.studInfo.tag
+        student = self.studInfo
+        student.name.setText(tag[0] + unicode(name) + tag[1])
+        student.last_name.setText(tag[0] + unicode(sname) + tag[1])
+        student.middle_name.setText(tag[0] + unicode(mname) + tag[1])
+        student.group.setText(tag[0] + unicode(group) + tag[1])
+
+
+    def showStudent(self, data=None):
+        if not data:
+            return None
+
+        name, sname, mname = None, None, None
+
+        imagePath = data.get('images_path')
+        if imagePath:
+            images = os.listdir(imagePath)
+            if images:
+                # Set first photo in imagePath dir
+                self.setImage(os.path.join(imagePath, images[0]))
+
+        full_name = data.get('full_name')
+        if isinstance(full_name, str) or isinstance(full_name, unicode):
+            full_name = full_name.split(' ')
+            # If full name has initials
+            if len(full_name) == 2 and full_name[1].count('.') == 2:
+                dotPos = full_name[1].find('.') + 1
+                name = full_name[1][:dotPos]
+                sname = full_name[0]
+                mname = full_name[1][full_name[1].find('.') + 1:]
+            elif len(full_name) == 3:
+                name, sname, mname = full_name
+
+        group = data.get('group')
+
+        self.setLabelsData(name, sname, mname, group)
 
 
 window = Window()

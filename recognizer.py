@@ -57,17 +57,19 @@ class FaceRecognizer(object):
         self.recognizer.train(images_and_labels[0], np.array(images_and_labels[1]))
 
 
-    def getFaces(self, photoPath):
+    def getFaces(self, photoPath, Images=True, Labels=True):
         """
         Get all faces from photo and gives subject_number from
         self.getSubjectNumber method for all faces.
         """
+        if not Images and not Labels: return None
         images, labels = [], []
         try:
             gray = Image.open(photoPath).convert('L')
         except IOError:
             return None # [], [] ?
-        subject_number = self.getSubjectNumber(photoPath)
+        if Labels:
+            subject_number = self.getSubjectNumber(photoPath)
         image = np.array(gray, 'uint8')
         faces = self.faceCascade.detectMultiScale(
                     image,
@@ -75,8 +77,10 @@ class FaceRecognizer(object):
                     minNeighbors=3,
                     minSize=self.minSize)
         for (x, y, w, h) in faces:
-            images.append(image[y: y + h, x: x + w])
-            labels.append(subject_number)
+            if Images:
+                images.append(image[y: y + h, x: x + w])
+            if Labels:
+                labels.append(subject_number)
         return images, labels
 
 
