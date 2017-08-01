@@ -42,8 +42,11 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
         images, labels = [], []
         # Group folders that are written in self.folders
         groupFolders = []
-
-        dirs = os.listdir(self.photoDir)
+        try:
+            dirs = os.listdir(self.photoDir)
+        except WindowsError as e:
+            sys.stderr.write("\n===\n%s\n===\n" % e)
+            return images, labels
         for group in self.groups:
             if group in dirs:
                 folder = os.path.join(self.photoDir, group)
@@ -87,6 +90,7 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
         if not number: return info
         number = int(number)
 
+
         info['group'], info['folder'] = os.path.split(self.relation[number])
         info['images_path'] = os.path.join(self.photoDir, self.relation[number])
         info['full_name'] = self.internalRelations[info['group']][info['folder']]
@@ -100,39 +104,38 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
         numPredicted = str(numPredicted)
 
         if numPredicted not in self.finded:
-            subjInfo = self.getSubjectInfo(numPredicted)
+            subjInfo = self.showStudent(numPredicted)
             self.finded.append(numPredicted)
             self.Window.findedStudents.addStudent(fullName=subjInfo['full_name'],
                                                   date="{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}".format(
                                                     *datetime.datetime.now().timetuple()
                                                     ),
-                                                  k=int(coef))
+                                                  k=int(coef),
+                                                  metadata=numPredicted)
 
-            self.emit(QtCore.SIGNAL('showStudent'),
-                      subjInfo
-                      )
+
+    def showStudent(self, numPredicted):
+        subjInfo = self.getSubjectInfo(numPredicted)
+        self.Window.emit(QtCore.SIGNAL('showStudent'),
+                  subjInfo
+                  )
+
+        return subjInfo
 
 
     def stopCondition(self, *args):
         return False
 
 
-    def getImagePathByNumber(self, number):
-        """
-        Returns the absolute path to the first photo in the folder
-        of the specified person's number.
-        """
-        path = os.path.join(self.photoDir,
-                            'id{:0>3}'.format(number)
-                            )
-        path = os.path.abspath(path)
-        return os.path.join(path, os.listdir(path)[0])
-
-
     def run(self):
-        self.Window.connect(self,
-                            QtCore.SIGNAL('showStudent'),
-                            self.Window.showStudent
-                            )
+        self.connect(self.Window,
+                     QtCore.SIGNAL('showStudent'),
+                     self.Window.showStudent
+                     )
+        self.Window.statusBar.showMessage(u'Тренування')
         self.train()
-        self.start_recognition()
+        if self.recognizer:
+            self.Window.statusBar.showMessage(u'Готово')
+            self.start_recognition()
+        else:
+            self.Window.statusBar.showMessage(u'Тренування не вдалось')

@@ -67,8 +67,9 @@ class StudentsTable(QtGui.QTableWidget):
     Table with list of students.
     Implements a friendly api to add students.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         QtGui.QTableWidget.__init__(self, 0, 3)
+        self.parent = parent
 
         self.setHorizontalHeaderLabels((u'Особа', u'Дата та час', u'K'))
         self.setStyleSheet('background-color: #d6f7ff;')
@@ -84,6 +85,23 @@ class StudentsTable(QtGui.QTableWidget):
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
 
         self.setAlternatingRowColors(True)
+
+        self.rowsData = []
+
+        QtCore.QObject.connect(self,
+            QtCore.SIGNAL('cellDoubleClicked(int, int)'),
+            self.cellDoubleClicked
+            )
+
+
+
+    def setConnection(self, controller):
+        # True if table connected with controller class
+        self.connection = self.connect(self.parent.controller,
+            QtCore.SIGNAL('showStudent'),
+            self.parent.controller.showStudent
+            )
+
 
 
     def addStudent(self, fullName=None, date=None, k=None, late=False, metadata=None):
@@ -110,7 +128,44 @@ class StudentsTable(QtGui.QTableWidget):
         self.setItem(currRow, 1, date)
         self.setItem(currRow, 2, k)
 
-        self.takeHorizontalHeaderItem(currRow).metadata = metadata
+        self.rowsData.append(metadata)
+
+
+    def cellDoubleClicked(self, row, column):
+        if self.connection:
+            self.parent.controller.emit(QtCore.SIGNAL('showStudent'),
+                    self.rowsData[row]
+                )
+
+
+class StatusBar(QtGui.QStatusBar):
+
+    def __init__(self, *args):
+        QtGui.QStatusBar.__init__(self)
+
+        font = QtGui.QFont('Arial', 12)
+        # font.setUnderline(True)
+        self.setFont(font)
+        self.setStyleSheet(
+            '''background-color: #1488a0;
+            color: #fff;'''
+        )
+        self.setCursor(
+            QtGui.QCursor(QtCore.Qt.PointingHandCursor)
+            )
+        self.showMessage(u'Завантаження')
+
+
+    def enterEvent(self, event):
+        new_font = self.font()
+        new_font.setUnderline(True)
+        self.setFont(new_font)
+
+
+    def leaveEvent(self, event):
+        new_font = self.font()
+        new_font.setUnderline(False)
+        self.setFont(new_font)
 
 
 class Window(QtGui.QWidget):
@@ -158,7 +213,7 @@ class Window(QtGui.QWidget):
         mainLayout.addLayout(tabLayout, 1, 2)
 
         # List of recognized students
-        self.findedStudents = StudentsTable()
+        self.findedStudents = StudentsTable(self)
         self.tabMenu.insertTab(1, self.findedStudents, u'Розпізнані особи')
 
         # List of recognized students who absent
@@ -169,14 +224,8 @@ class Window(QtGui.QWidget):
         self.stat = QtGui.QListWidget()
         self.tabMenu.insertTab(3, self.stat, u'Статистика')
 
-        self.statusBar = QtGui.QStatusBar()
-        self.statusBar.setStyleSheet(
-            '''background-color: #1488a0;
-            font-family: Arial;
-            font-size: 18px;
-            color: #fff;'''
-        )
-        self.statusBar.showMessage(u'Готово')
+        self.statusBar = StatusBar()
+
         # self.statusBar.hide()
         mainLayout.addWidget(self.statusBar, 2, 1, 1, 2)
 
@@ -236,9 +285,14 @@ class Window(QtGui.QWidget):
         self.setLabelsData(name, sname, mname, group)
 
 
+    def setController(self, controller):
+        self.controller = controller(self)
+        self.findedStudents.setConnection(controller)
+
+
 window = Window()
-recognizer = RecognitionController(window)
-recognizer.start()
+window.setController(RecognitionController)
+window.controller.start()
 window.show()
 
 sys.exit(app.exec_())

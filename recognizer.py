@@ -48,13 +48,16 @@ class FaceRecognizer(object):
             assert [x for x in formats if isinstance(x, str) or isinstance(x, unicode)]
             assert maxCoefficient
             assert len(minSize) == 2
-        __check()
+        # __check()
 
 
     def train(self):
         images_and_labels = self.getTrainImages()
-        self.recognizer = cv2.createLBPHFaceRecognizer(1,8,8,8,123)
-        self.recognizer.train(images_and_labels[0], np.array(images_and_labels[1]))
+        if all(images_and_labels):
+            self.recognizer = cv2.createLBPHFaceRecognizer(1,8,8,8,123)
+            self.recognizer.train(images_and_labels[0], np.array(images_and_labels[1]))
+        else:
+            self.recognizer = None
 
 
     def getFaces(self, photoPath, Images=True, Labels=True):
