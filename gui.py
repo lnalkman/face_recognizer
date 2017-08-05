@@ -62,6 +62,22 @@ class StudentInfo(QtGui.QGridLayout):
         self.addWidget(self.group, 4, 2)
 
 
+class StatisticsTable(QtGui.QTableWidget):
+
+    def __init__(self, *args, **kwargs):
+        QtGui.QTableWidget.__init__(self, 5, 2)
+
+        self.setStyleSheet('background-color: #d6f7ff;')
+        hHeader = self.horizontalHeader()
+        hHeader.setResizeMode(0, QtGui.QHeaderView.Stretch)
+        hHeader.setResizeMode(1, QtGui.QHeaderView.Stretch)
+        hHeader.hide()
+
+        vHeader = self.verticalHeader()
+        vHeader.hide()
+
+        self.setShowGrid(False)
+
 class StudentsTable(QtGui.QTableWidget):
     """
     Table with list of students.
@@ -221,7 +237,7 @@ class Window(QtGui.QWidget):
         self.tabMenu.insertTab(3, self.absentStudents, u'Відсутні')
 
         # Recognition statistics
-        self.stat = QtGui.QListWidget()
+        self.stat = StatisticsTable()
         self.tabMenu.insertTab(3, self.stat, u'Статистика')
 
         self.statusBar = StatusBar()
@@ -292,7 +308,7 @@ class Window(QtGui.QWidget):
 
 window = Window()
 window.setController(RecognitionController)
-window.controller.start()
+#window.controller.start()
 window.show()
 
 sys.exit(app.exec_())
