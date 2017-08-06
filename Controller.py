@@ -51,6 +51,8 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
             if group in dirs:
                 folder = os.path.join(self.photoDir, group)
                 groupFolders.append(folder)
+                # If group folder exist, write it in statistics
+                self.Window.stat.emit(QtCore.SIGNAL('setGroups'), '', group)
             else:
                 sys.stderr.write("\n===\nWarning: Can't find %s group folder\n===\n" % group)
 
@@ -64,6 +66,9 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
                         if images_and_labels:
                             images += images_and_labels[0]
                             labels += [subject_number]
+        if self.stat:
+            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 1, len(self.relation))
+            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 2, len(images))
 
         return images, labels
 
@@ -102,6 +107,8 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
         if faceNum == faceCount:
             os.remove(imagePath)
         numPredicted = str(numPredicted)
+        if self.stat:
+            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 4, 0, 1)
 
         if numPredicted not in self.finded:
             subjInfo = self.showStudent(numPredicted)
@@ -111,7 +118,12 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
                                                     *datetime.datetime.now().timetuple()
                                                     ),
                                                   k=int(coef),
-                                                  metadata=numPredicted)
+                                                  metadata=numPredicted
+                                                  )
+            if self.stat:
+                self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 5, 0, 1)
+        elif numPredicted == -1:
+            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 6, 0, 1)            
 
 
     def showStudent(self, numPredicted):
@@ -132,6 +144,21 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
                      QtCore.SIGNAL('showStudent'),
                      self.Window.showStudent
                      )
+        if (self.connect(self.Window.stat,
+                     QtCore.SIGNAL('setGroups'),
+                     self.Window.stat.setGroups
+                     )
+            and
+            self.connect(self.Window.stat,
+                         QtCore.SIGNAL('setNumericField'),
+                         self.Window.stat.setNumericField
+                         )
+            ):
+            self.stat = True
+        else:
+            self.stat = False
+
+
         self.Window.statusBar.showMessage(u'Тренування')
         self.train()
         if self.recognizer:

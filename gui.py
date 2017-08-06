@@ -64,10 +64,23 @@ class StudentInfo(QtGui.QGridLayout):
 
 class StatisticsTable(QtGui.QTableWidget):
 
-    def __init__(self, *args, **kwargs):
-        QtGui.QTableWidget.__init__(self, 5, 2)
+    fields = (
+        (u'Групи', '-'),
+        (u'Кількість осіб', '0'),
+        (u'Кількість фотографій для навчання', '0'),
+        (u' ', ' '),
+        (u'Перевірено фотографій', '0'),
+        (u'Розпізнано осіб', '0'),
+        (u'Не розпізнано осіб', '0'),
+        (u' ', ' '),
+        (u'Зпізнення', '0'),
+    )
 
-        self.setStyleSheet('background-color: #d6f7ff;')
+
+    def __init__(self, *args, **kwargs):
+        QtGui.QTableWidget.__init__(self, 0, 2)
+
+        self.setStyleSheet('''background-color: #d6f7ff; font-size: 16px; color: #333;''')
         hHeader = self.horizontalHeader()
         hHeader.setResizeMode(0, QtGui.QHeaderView.Stretch)
         hHeader.setResizeMode(1, QtGui.QHeaderView.Stretch)
@@ -77,6 +90,47 @@ class StatisticsTable(QtGui.QTableWidget):
         vHeader.hide()
 
         self.setShowGrid(False)
+        self.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+
+        for text in self.fields:
+            item1 = QtGui.QTableWidgetItem(text[0])
+            item1.setTextAlignment(QtCore.Qt.AlignCenter)
+
+            item2 = QtGui.QTableWidgetItem(text[1])
+            item2.setTextAlignment(QtCore.Qt.AlignCenter)
+
+            currRow = self.rowCount()
+            self.insertRow(currRow)
+            self.setItem(currRow, 0, item1)
+            self.setItem(currRow, 1, item2)
+
+
+    def setGroups(self, groups='-', inc=None, delimiter=' ,'):
+        ''' groups -> str '''
+        item = self.item(0, 1)
+        if isinstance(inc, str):
+            if item.text() == '-' or not item.text():
+                item.setText(inc)
+            else:
+                item.setText(item.text() + delimiter + inc)
+        elif isinstance(groups, str):
+            item.setText(groups)
+
+
+    def setNumericField(self, row=None, val=0, inc=None):
+        """
+        Inserts a numeric value in a field with a row, controls the type.
+        If isinstance(inc, int) == True, old value will be incremented on inc.
+        """
+        item = self.item(row, 1)
+        if isinstance(inc, int):
+            item.setText(str(int(item.text()) + inc))
+        elif isinstance(val, int):
+            item.setText(str(val))
+
+
+
 
 class StudentsTable(QtGui.QTableWidget):
     """
@@ -308,7 +362,7 @@ class Window(QtGui.QWidget):
 
 window = Window()
 window.setController(RecognitionController)
-#window.controller.start()
+window.controller.start()
 window.show()
 
 sys.exit(app.exec_())
