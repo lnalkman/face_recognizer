@@ -55,21 +55,22 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
                 self.Window.stat.emit(QtCore.SIGNAL('setGroups'), '', group)
             else:
                 sys.stderr.write("\n===\nWarning: Can't find %s group folder\n===\n" % group)
-
+        print groupFolders
         for group in groupFolders:
             for person in os.listdir(group):
                 personFolder = os.path.join(group, person)
                 if os.path.isdir(personFolder):
                     subject_number = self.getTempSubjectNumber(personFolder)
+                    self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 2, 0, 1)
                     for photo in os.listdir(personFolder):
                         images_and_labels = self.getFaces(os.path.join(personFolder, photo), Labels=False)
                         if images_and_labels:
+                            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 3, 0, 1)
                             images += images_and_labels[0]
                             labels += [subject_number]
-        if self.stat:
-            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 1, len(self.relation))
-            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 2, len(images))
-
+        # if self.stat:
+        #     self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 2, len(self.relation))
+        #     self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 3, len(images))
         return images, labels
 
 
@@ -93,8 +94,6 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
                 'images_path': None,
                 }
         if not number: return info
-        number = int(number)
-
 
         info['group'], info['folder'] = os.path.split(self.relation[number])
         info['images_path'] = os.path.join(self.photoDir, self.relation[number])
@@ -106,11 +105,12 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
     def recognitionDataHandler(self, numPredicted, coef, faceNum, faceCount, imagePath):
         if faceNum == faceCount:
             os.remove(imagePath)
-        numPredicted = str(numPredicted)
-        if self.stat:
-            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 4, 0, 1)
+        numPredicted = numPredicted if isinstance(numPredicted, int) else None
 
-        if numPredicted not in self.finded:
+        if self.stat:
+            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 5, 0, 1)
+
+        if numPredicted and numPredicted not in self.finded and coef < self.coef:
             subjInfo = self.showStudent(numPredicted)
             self.finded.append(numPredicted)
             self.Window.findedStudents.addStudent(fullName=subjInfo['full_name'],
@@ -121,9 +121,9 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
                                                   metadata=numPredicted
                                                   )
             if self.stat:
-                self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 5, 0, 1)
-        elif numPredicted == -1:
-            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 6, 0, 1)            
+                self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 6, 0, 1)
+        else:
+            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 7, 0, 1)
 
 
     def showStudent(self, numPredicted):
