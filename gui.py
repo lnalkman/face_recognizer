@@ -47,35 +47,38 @@ class StudentInfo(QtGui.QGridLayout):
         for i, field in enumerate(self.fields, 1):
             self.addWidget(QtGui.QLabel(field), i, 1)
 
-        self.name = QtGui.QLabel("<b style='font-size: 26px; color: #333333;font-family: Arial,sans-serif;'>ExampleName</b>")
+        self.name = QtGui.QLabel("<b style='font-size: 26px; color: #333333;font-family: Arial,sans-serif;'>-</b>")
         # Reserve addition place for all labels in second column
         self.name.setMinimumWidth(350)
         self.addWidget(self.name, 1, 2)
 
-        self.last_name = QtGui.QLabel("<b style='font-size: 26px; color: #333333;font-family: Arial,sans-serif;'>ExampleSecondName</b>")
+        self.last_name = QtGui.QLabel("<b style='font-size: 26px; color: #333333;font-family: Arial,sans-serif;'>-</b>")
         self.addWidget(self.last_name, 2, 2)
 
-        self.middle_name = QtGui.QLabel("<b style='font-size: 26px; color: #333333;font-family: Arial,sans-serif;'>ExampleMiddleName</b>")
+        self.middle_name = QtGui.QLabel("<b style='font-size: 26px; color: #333333;font-family: Arial,sans-serif;'>-</b>")
         self.addWidget(self.middle_name, 3, 2)
 
-        self.group = QtGui.QLabel("<b style='font-size: 26px; color: #333333;font-family: Arial,sans-serif;'>ExampleGroup</b>")
+        self.group = QtGui.QLabel("<b style='font-size: 26px; color: #333333;font-family: Arial,sans-serif;'>-</b>")
         self.addWidget(self.group, 4, 2)
 
 
 class StatisticsTable(QtGui.QTableWidget):
 
+    # If second tuple's element empty, this row will be section with own color
     fields = (
+        (u'Інформація про навчання:', ''),
         (u'Групи', '-'),
         (u'Кількість осіб', '0'),
         (u'Кількість фотографій для навчання', '0'),
-        (u' ', ' '),
+        (u'Розпізнавання:', ''),
         (u'Перевірено фотографій', '0'),
         (u'Розпізнано осіб', '0'),
         (u'Не розпізнано осіб', '0'),
-        (u' ', ' '),
-        (u'Зпізнення', '0'),
+        (u' ', ''),
+        (u'Запізнення', '0'),
     )
 
+    sectionColor = QtGui.QColor(93, 211, 195)
 
     def __init__(self, *args, **kwargs):
         QtGui.QTableWidget.__init__(self, 0, 2)
@@ -91,7 +94,7 @@ class StatisticsTable(QtGui.QTableWidget):
 
         self.setShowGrid(False)
         self.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.setSelectionMode(QtGui.QAbstractItemView.NoSelection)
 
         for text in self.fields:
             item1 = QtGui.QTableWidgetItem(text[0])
@@ -99,6 +102,10 @@ class StatisticsTable(QtGui.QTableWidget):
 
             item2 = QtGui.QTableWidgetItem(text[1])
             item2.setTextAlignment(QtCore.Qt.AlignCenter)
+
+            if not text[1]:
+                item1.setBackgroundColor(self.sectionColor)
+                item2.setBackgroundColor(self.sectionColor)
 
             currRow = self.rowCount()
             self.insertRow(currRow)
@@ -108,7 +115,7 @@ class StatisticsTable(QtGui.QTableWidget):
 
     def setGroups(self, groups='-', inc=None, delimiter=' ,'):
         ''' groups -> str '''
-        item = self.item(0, 1)
+        item = self.item(1, 1)
         if isinstance(inc, str):
             if item.text() == '-' or not item.text():
                 item.setText(inc)
@@ -284,15 +291,17 @@ class Window(QtGui.QWidget):
 
         # List of recognized students
         self.findedStudents = StudentsTable(self)
-        self.tabMenu.insertTab(1, self.findedStudents, u'Розпізнані особи')
+        self.tabMenu.insertTab(0, self.findedStudents, u'Розпізнані особи')
 
         # List of recognized students who absent
         self.absentStudents = QtGui.QListWidget()
-        self.tabMenu.insertTab(3, self.absentStudents, u'Відсутні')
+        self.tabMenu.insertTab(1, self.absentStudents, u'Відсутні')
 
         # Recognition statistics
         self.stat = StatisticsTable()
-        self.tabMenu.insertTab(3, self.stat, u'Статистика')
+        self.tabMenu.insertTab(2, self.stat, u'Додаткова інформація')
+        self.tabMenu.setTabToolTip(2, u'Інформація про процес розпізнавання та конфігурацію розпізнавальника')
+        self.tabMenu.setCurrentIndex(2)
 
         self.statusBar = StatusBar()
 
