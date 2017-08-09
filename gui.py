@@ -74,9 +74,17 @@ class StatisticsTable(QtGui.QTableWidget):
         (u'Перевірено фотографій', '0'),
         (u'Розпізнано осіб', '0'),
         (u'Не розпізнано осіб', '0'),
-        (u' ', ''),
         (u'Запізнення', '0'),
+        (u'Налаштування розпізнавальника:', ''),
+        (u'Формати фотографій для обробки', '[?]'),
+        (u'Мінімальний розмір лиця(px)', '(?, ?)'),
+        (u'Максимальний розмір лиця(px)', '(?, ?)'),
+        (u'Максимальний коефіціент точності', '?'),
+        (u'Зберігати не розпізнані фотографії', '?'),
+        (u'Зберігати фотографії з меншою точністю розпізнавання', '?'),
     )
+
+    tooltipTag = (u"<span style='font-size: 12px'>", u"</span>")
 
     sectionColor = QtGui.QColor(93, 211, 195)
 
@@ -98,6 +106,7 @@ class StatisticsTable(QtGui.QTableWidget):
 
         for text in self.fields:
             item1 = QtGui.QTableWidgetItem(text[0])
+            item1.setToolTip(self.tooltipTag[0] + text[0] + self.tooltipTag[1])
             item1.setTextAlignment(QtCore.Qt.AlignCenter)
 
             item2 = QtGui.QTableWidgetItem(text[1])
@@ -113,16 +122,16 @@ class StatisticsTable(QtGui.QTableWidget):
             self.setItem(currRow, 1, item2)
 
 
-    def setGroups(self, groups='-', inc=None, delimiter=' ,'):
-        ''' groups -> str '''
-        item = self.item(1, 1)
-        if isinstance(inc, str):
+    def setTextField(self, text='-', inc=None, row=0, delimiter=' ,'):
+        ''' text -> str or unicode'''
+        item = self.item(row, 1)
+        if isinstance(inc, str) or isinstance(inc, unicode):
             if item.text() == '-' or not item.text():
                 item.setText(inc)
             else:
                 item.setText(item.text() + delimiter + inc)
-        elif isinstance(groups, str):
-            item.setText(groups)
+        elif isinstance(text, str) or isinstance(text, unicode):
+            item.setText(text)
 
 
     def setNumericField(self, row=None, val=0, inc=None):
@@ -135,8 +144,6 @@ class StatisticsTable(QtGui.QTableWidget):
             item.setText(str(int(item.text()) + inc))
         elif isinstance(val, int):
             item.setText(str(val))
-
-
 
 
 class StudentsTable(QtGui.QTableWidget):
@@ -169,7 +176,6 @@ class StudentsTable(QtGui.QTableWidget):
             QtCore.SIGNAL('cellDoubleClicked(int, int)'),
             self.cellDoubleClicked
             )
-
 
 
     def setConnection(self, controller):
@@ -368,10 +374,10 @@ class Window(QtGui.QWidget):
         self.controller = controller(self)
         self.findedStudents.setConnection(controller)
 
+if __name__ == '__main__':
+    window = Window()
+    window.setController(RecognitionController)
+    window.controller.start()
+    window.show()
 
-window = Window()
-window.setController(RecognitionController)
-window.controller.start()
-window.show()
-
-sys.exit(app.exec_())
+    sys.exit(app.exec_())
