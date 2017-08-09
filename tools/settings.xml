@@ -40,6 +40,9 @@
       <format>jpeg</format>
       <format>png</format>
     </formats>
+    <groups>
+      <group>IS-62</group>
+    </groups>
   </photo>
   <!-- Налаштування збереження данних та фотографій -->
   <saves>

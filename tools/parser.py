@@ -16,12 +16,13 @@ def parse_settings(filepath='settings.xml'):
                 pass
 
     properties = {
-        'formats': None,
+        'formats': [],
         'maxCoefficient': 60,
         'minSize': None, # (min_width or None, min_height or None) or None
         'maxSize': None, # (max_width or None, max_height or None) or None
         'notRecognizedDir': None,
-        'notSureRecognizedDir': None
+        'notSureRecognizedDir': None,
+        'groups': []
     }
     try:
         if os.path.isfile(filepath):
@@ -82,5 +83,11 @@ def parse_settings(filepath='settings.xml'):
             d = dom.getElementsByTagName('notSureRecognizedDir')[0]
             if d.firstChild:
                 properties['notSureRecognizedDir'] = d.firstChild.data
+            # Use str, because dbm do not support unicode as keys
+            properties['groups'] = [
+                str(x.firstChild.data)
+                for x in dom.getElementsByTagName('group')
+                if x.firstChild
+                ]
     finally:
         return properties

@@ -15,13 +15,14 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
     Show some recognition data in GUI.
     """
     def __init__(self, window=None):
+        parsedSettings = parse_settings('tools/settings.xml')
         QtCore.QThread.__init__(self)
         FaceRecognizer.__init__(
             self,
             faceCascade=os.path.abspath('tools/haarcascade_frontalface_default.xml'),
             forRecognitionPhotoDir=os.path.abspath('photo'),
             trainPhotoDir=os.path.abspath('../Release/Photoes'),
-            **parse_settings('tools/settings.xml')
+            **parsedSettings
             )
 
         self.internalRelations = shelve.open('tools/bd.dbm')
@@ -30,9 +31,10 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
 
         # self.relation[subject_number] = "subject_group/subject_folder"
         self.relation = []
-        ### # For Test
-        self.groups = ["IS-62"]
-        ###
+
+        self.groups = parsedSettings.get('groups') or []
+        if not self.groups:
+            sys.stderr.write('WARNING: groups list is empty\n')
 
 
     def getTrainImages(self):
@@ -52,20 +54,23 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
                 folder = os.path.join(self.photoDir, group)
                 groupFolders.append(folder)
                 # If group folder exist, write it in statistics
-                self.Window.stat.emit(QtCore.SIGNAL('setGroups'), '', group)
+                if self.stat:
+                    self.Window.stat.emit(QtCore.SIGNAL('setTextField'), '', group, 1)
             else:
                 sys.stderr.write("\n===\nWarning: Can't find %s group folder\n===\n" % group)
-        print groupFolders
+
         for group in groupFolders:
             for person in os.listdir(group):
                 personFolder = os.path.join(group, person)
                 if os.path.isdir(personFolder):
                     subject_number = self.getTempSubjectNumber(personFolder)
-                    self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 2, 0, 1)
+                    if self.stat:
+                        self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 2, 0, 1)
                     for photo in os.listdir(personFolder):
                         images_and_labels = self.getFaces(os.path.join(personFolder, photo), Labels=False)
                         if images_and_labels:
-                            self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 3, 0, 1)
+                            if self.stat:
+                                self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 3, 0, 1)
                             images += images_and_labels[0]
                             labels += [subject_number]
         # if self.stat:
@@ -93,7 +98,7 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
                 'folder': None,
                 'images_path': None,
                 }
-        if not number: return info
+        if not isinstance(number, int): return info
 
         info['group'], info['folder'] = os.path.split(self.relation[number])
         info['images_path'] = os.path.join(self.photoDir, self.relation[number])
@@ -110,7 +115,7 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
         if self.stat:
             self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 5, 0, 1)
 
-        if numPredicted and numPredicted not in self.finded and coef < self.coef:
+        if numPredicted != None and numPredicted not in self.finded and coef < self.coef:
             subjInfo = self.showStudent(numPredicted)
             self.finded.append(numPredicted)
             self.Window.findedStudents.addStudent(fullName=subjInfo['full_name'],
@@ -122,7 +127,7 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
                                                   )
             if self.stat:
                 self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 6, 0, 1)
-        else:
+        elif self.stat:
             self.Window.stat.emit(QtCore.SIGNAL('setNumericField'), 7, 0, 1)
 
 
@@ -135,6 +140,17 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
         return subjInfo
 
 
+    def showSettings(self):
+        if not self.stat: return None
+        self.Window.stat.emit(QtCore.SIGNAL('setTextField'), ' ,'.join(self.formats), None, 10)
+        self.Window.stat.emit(QtCore.SIGNAL('setTextField'), str(self.minSize), None, 11)
+        self.Window.stat.emit(QtCore.SIGNAL('setTextField'), str(self.maxSize), None, 12)
+        self.Window.stat.emit(QtCore.SIGNAL('setTextField'), str(self.coef), None, 13)
+        self.Window.stat.emit(QtCore.SIGNAL('setTextField'), str(bool(self.notRecognizedDir)), None, 14)
+        self.Window.stat.emit(QtCore.SIGNAL('setTextField'), str(bool(self.notSureRecognizedDir)), None, 15)
+
+
+
     def stopCondition(self, *args):
         return False
 
@@ -144,21 +160,23 @@ class RecognitionController(QtCore.QThread, FaceRecognizer):
                      QtCore.SIGNAL('showStudent'),
                      self.Window.showStudent
                      )
-        if (self.connect(self.Window.stat,
-                     QtCore.SIGNAL('setGroups'),
-                     self.Window.stat.setGroups
-                     )
-            and
-            self.connect(self.Window.stat,
-                         QtCore.SIGNAL('setNumericField'),
-                         self.Window.stat.setNumericField
+        self.stat = True
+        try:
+            if (self.connect(self.Window.stat,
+                         QtCore.SIGNAL('setTextField'),
+                         self.Window.stat.setTextField
                          )
-            ):
-            self.stat = True
-        else:
+                and
+                self.connect(self.Window.stat,
+                             QtCore.SIGNAL('setNumericField'),
+                             self.Window.stat.setNumericField
+                             )
+                ):
+                self.stat = True
+        except AttributeError:
             self.stat = False
 
-
+        self.showSettings()
         self.Window.statusBar.showMessage(u'Тренування')
         self.train()
         if self.recognizer:
