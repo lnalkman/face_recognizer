@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
 
 import os
 import re
@@ -22,42 +21,48 @@ class FaceRecognizer(object):
     def __init__(self, notRecognizedDir=None, notSureRecognizedDir=None,
                  forRecognitionPhotoDir=None, trainPhotoDir=None,
                  faceCascade=None, maxCoefficient=60, minSize=(60, 60),
-                 maxSize=(720, 480), formats=[]):
-        self.notRecognizedDir = notRecognizedDir
-        self.notSureRecognizedDir = notSureRecognizedDir
-        self.photoDir = trainPhotoDir
-        self.unknownPhotoDir = forRecognitionPhotoDir
-        self.coef = maxCoefficient
+                 maxSize=(720, 480), formats=[], **kwargs):
+        self.notRecognizedDir = notRecognizedDir if os.path.isdir(unicode(notRecognizedDir)) else None
+        self.notSureRecognizedDir = notSureRecognizedDir if os.path.isdir(unicode(notSureRecognizedDir)) else None
+        self.photoDir = trainPhotoDir if os.path.isdir(unicode(trainPhotoDir)) else None
+        self.unknownPhotoDir = forRecognitionPhotoDir if os.path.isdir(unicode(forRecognitionPhotoDir)) else None
+        try:
+            self.coef = maxCoefficient
+        except TypeError:
+            self.coef = 60
+            sys.stderr.write('warning: maxCoefficient can\'t be converted to int\n')
+
         self.formats = formats
-        self.minSize = tuple(minSize)
-        self.maxSize = tuple(maxSize)
+
+        try:
+            self.minSize = tuple(minSize)
+        except TypeError:
+            self.minSize = (60, 60)
+            sys.stderr.write('warning: minSize is not specified, or it has invalid format\n')
+
+        try:
+            self.maxSize = tuple(maxSize)
+        except TypeError:
+            self.maxSize = (60, 60)
+            sys.stderr.write('warning: maxSize is not specified, or it has invalid format\n')
+
         if isinstance(faceCascade, str):
             self.faceCascade = cv2.CascadeClassifier(os.path.abspath(faceCascade))
-        else:
+        elif isinstance(faceCascade, cv2.CascadeClassifier):
             self.faceCascade = faceCascade
+        if self.faceCascade.empty():
+            sys.stderr.write('WARNING: face cascade empty.\n')
 
-        # Check main variables
-        def __check():
-            assert not self.faceCascade.empty()
-            assert os.path.isdir(self.photoDir)
-            assert os.path.isdir(self.unknownPhotoDir)
-            if self.notRecognizedDir:
-                assert os.path.isdir(self.notRecognizedDir)
-            if self.notSureRecognizedDir:
-                assert os.path.isdir(self.notSureRecognizedDir)
-            assert [x for x in formats if isinstance(x, str) or isinstance(x, unicode)]
-            assert maxCoefficient
-            assert len(minSize) == 2
-        # __check()
-
+        self.recognizer = None
 
     def train(self):
+        if self.faceCascade.empty(): return False
+
         images_and_labels = self.getTrainImages()
         if all(images_and_labels):
             self.recognizer = cv2.createLBPHFaceRecognizer(1,8,8,8,123)
             self.recognizer.train(images_and_labels[0], np.array(images_and_labels[1]))
-        else:
-            self.recognizer = None
+            return True
 
 
     def getFaces(self, photoPath, Images=True, Labels=True):
@@ -100,6 +105,8 @@ class FaceRecognizer(object):
         """
         images = []
         labels = []
+        if not self.photoDir: return images, labels
+
         # Get all folders in self.photoDir
         folders = filter(
             os.path.isdir,
@@ -168,6 +175,10 @@ class FaceRecognizer(object):
 
 
     def start_recognition(self):
+        if not self.recognizer and not self.train():
+            sys.stderr.write("WARNING: recognition can't be started, recognizer is not assigned\n")
+            return None
+
         i = 0
         while True:
             images = [
